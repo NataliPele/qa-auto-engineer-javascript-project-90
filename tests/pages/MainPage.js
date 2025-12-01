@@ -3,7 +3,7 @@ export class MainPage {
      * @param {import('@playwright/test').Page} page
      */
     constructor(page) {
-      this.page = page;
+      this.page = page
     }
   
     get userAvatar() {
@@ -15,8 +15,8 @@ export class MainPage {
       }
     
       async logout() {
-        await this.userAvatar.click();
-        await this.logoutItem.click();
+        await this.userAvatar.click()
+        await this.logoutItem.click()
       }
   }
   

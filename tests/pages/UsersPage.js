@@ -75,8 +75,8 @@ export class UsersPage {
   }
 
   async openCreateForm() {
-    await this.createButton.click();
-    await this.emailInput.waitFor();
+    await this.createButton.click()
+    await this.emailInput.waitFor()
   }
 
   async openUserForEdit(email) {

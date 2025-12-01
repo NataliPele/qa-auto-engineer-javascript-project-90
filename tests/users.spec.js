@@ -76,7 +76,7 @@ test.describe('Users CRUD', () => {
       email: `upd_${Date.now()}@example.com`,
       firstName: 'Bob',
       lastName: 'Updated',
-    };
+    }
 
     // форма редактирования отображается и позволяет изменить данные
     await users.openUserForEdit(original.email)
@@ -135,7 +135,6 @@ test.describe('Users CRUD', () => {
     await users.deleteUserViaEdit(target.email)
     await users.goto()
 
-    // Пользователь исчез из списка
     await expect(users.rowByEmail(target.email)).toHaveCount(0)
   })
 
