@@ -3,47 +3,39 @@ import { LoginPage } from './pages/LoginPage.js'
 import { MainPage } from './pages/MainPage.js'
 import { UsersPage } from './pages/UsersPage.js'
 
-async function loginAndGoToUsers(page) {
-  const loginPage = new LoginPage(page)
-  const mainPage = new MainPage(page)
-  const usersPage = new UsersPage(page)
-
-  await loginPage.goto()
-  await loginPage.login('test', 'test')
-
-  await expect(mainPage.userAvatar).toBeVisible()
-
-  await usersPage.goto()
-
-  return usersPage
+const testUser = {
+  username: 'test',
+  password: 'test',
 }
 
 test.describe('Users CRUD', () => {
-  test('Create user', async ({ page }) => {
-    const users = await loginAndGoToUsers(page)
+  /** @type {UsersPage} */
+  let users
 
+  test.beforeEach(async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    const mainPage = new MainPage(page)
+    users = new UsersPage(page)
+
+    await loginPage.goto()
+    await loginPage.login(testUser.username, testUser.password)
+    await expect(mainPage.userAvatar).toBeVisible()
+
+    await users.goto()
+  })
+
+  test('Создание пользователя', async () => {
     const user = {
       email: `user_${Date.now()}@example.com`,
       firstName: 'Alice',
       lastName: 'Johnson',
-    };
+    }
 
-    // Форма создания отображается корректно
-    await users.openCreateForm()
-    await expect(users.emailInput).toBeVisible()
-    await expect(users.firstNameInput).toBeVisible()
-    await expect(users.lastNameInput).toBeVisible()
+    await users.createUser(user)
+    await users.expectUserInList(user, expect)
+  })
 
-    // Вводим данные и сохраняем
-    await users.fillUserForm(user)
-    await users.submitForm()
-    await users.goto()
-    await users.expectUserInList(user)
-  });
-
-  test('Users list displays basic info', async ({ page }) => {
-    const users = await loginAndGoToUsers(page)
-
+  test('Отображение списка пользователей', async ({ page }) => {
     // Проверяем заголовки колонок
     await expect(page.getByText(/^Email$/i)).toBeVisible()
     await expect(page.getByText(/^First name$/i)).toBeVisible()
@@ -56,21 +48,16 @@ test.describe('Users CRUD', () => {
     await expect(existingRow.getByText(/^Johnson$/i)).toBeVisible()
   })
 
-  test('Edit user', async ({ page }) => {
-    const users = await loginAndGoToUsers(page)
-
+  test('Редактирование пользователя', async () => {
     const original = {
       email: `orig_${Date.now()}@example.com`,
       firstName: 'Peter',
       lastName: 'Brown',
-    };
+    }
 
     // создаём пользователя
-    await users.openCreateForm()
-    await users.fillUserForm(original)
-    await users.submitForm()
-    await users.goto()
-    await users.expectUserInList(original)
+    await users.createUser(original)
+    await users.expectUserInList(original, expect)
 
     const updated = {
       email: `upd_${Date.now()}@example.com`,
@@ -87,49 +74,39 @@ test.describe('Users CRUD', () => {
     await users.fillUserForm(updated)
     await users.submitForm()
     await users.goto()
-    await users.expectUserInList(updated)
+    await users.expectUserInList(updated, expect)
   })
 
-  test('Edit user: email validation', async ({ page }) => {
-    const users = await loginAndGoToUsers(page)
-  
+  test('Редактирование с невалидным email', async ({ page }) => {
     const user = {
       email: `val_${Date.now()}@example.com`,
       firstName: 'Val',
       lastName: 'Test',
-    };
-  
+    }
+
     // создаём корректного пользователя
-    await users.openCreateForm()
-    await users.fillUserForm(user)
-    await users.submitForm()
-    await users.goto()
-    await users.expectUserInList(user)
-  
+    await users.createUser(user)
+    await users.expectUserInList(user, expect)
+
     // открываем редактирование и вводим некорректный email
     await users.openUserForEdit(user.email)
     await users.emailInput.fill('not-an-email')
     await users.submitForm()
+
     await expect(
-      page.getByText(/incorrect email format/i)
+      page.getByText(/incorrect email format/i),
     ).toBeVisible()
   })
-  
 
-  test('Delete one user', async ({ page }) => {
-    const users = await loginAndGoToUsers(page)
-
+  test('Удаление одного пользователя', async () => {
     const target = {
       email: `del_${Date.now()}@example.com`,
       firstName: 'Del',
       lastName: 'One',
     }
 
-    await users.openCreateForm()
-    await users.fillUserForm(target)
-    await users.submitForm()
-    await users.goto()
-    await users.expectUserInList(target)
+    await users.createUser(target)
+    await users.expectUserInList(target, expect)
 
     // Удаляем через форму редактирования
     await users.deleteUserViaEdit(target.email)
@@ -138,9 +115,7 @@ test.describe('Users CRUD', () => {
     await expect(users.rowByEmail(target.email)).toHaveCount(0)
   })
 
-  test('Bulk delete users', async ({ page }) => {
-    const users = await loginAndGoToUsers(page)
-
+  test('Массовое удаление', async () => {
     const u1 = {
       email: `b1_${Date.now()}@example.com`,
       firstName: 'Bulk',
@@ -152,25 +127,16 @@ test.describe('Users CRUD', () => {
       lastName: 'Two',
     }
 
-    // создаём первого
-    await users.openCreateForm()
-    await users.fillUserForm(u1)
-    await users.submitForm()
-    await users.goto()
-    await users.expectUserInList(u1)
+    await users.createUser(u1)
+    await users.expectUserInList(u1, expect)
 
-    // создаём второго
-    await users.openCreateForm()
-    await users.fillUserForm(u2)
-    await users.submitForm()
-    await users.goto()
-    await users.expectUserInList(u2)
+    await users.createUser(u2)
+    await users.expectUserInList(u2, expect)
 
     // Выделяем всех и удаляем
     await users.selectAllUsers()
     await users.deleteSelectedUsers()
 
-    // проверка, что удалились
     await expect(users.rowByEmail(u1.email)).toHaveCount(0)
     await expect(users.rowByEmail(u2.email)).toHaveCount(0)
   })

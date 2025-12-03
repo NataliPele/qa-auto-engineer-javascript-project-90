@@ -2,29 +2,40 @@ import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/LoginPage.js'
 import { MainPage } from './pages/MainPage.js'
 
-test.describe('Authentication & Authorization', () => {
-  test('user can sign in with any credentials', async ({ page }) => {
-    const loginPage = new LoginPage(page)
-    const mainPage = new MainPage(page)
+const User1 = {
+  username: 'testuser',
+  password: 'some-password',
+}
 
+const User2 = {
+  username: 'another-user',
+  password: 'another-password',
+}
+
+test.describe('Авторизация', () => {
+  /** @type {LoginPage} */
+  let loginPage;
+  /** @type {MainPage} */
+  let mainPage;
+
+  test.beforeEach(async ({ page }) => {
+    loginPage = new LoginPage(page)
+    mainPage = new MainPage(page)
+  })
+
+  test('можно залогиниться', async () => {
     await loginPage.goto()
-
-    await loginPage.login('testuser', 'some-password')
+    await loginPage.login(User1.username, User1.password)
 
     await expect(mainPage.userAvatar).toBeVisible()
   })
 
-  test('user can logout and returns to login form', async ({ page }) => {
-    const loginPage = new LoginPage(page)
-    const mainPage = new MainPage(page)
-
+  test('можно разлогиниться и вернуться к форме авторизации', async () => {
     await loginPage.goto()
-    await loginPage.login('another-user', 'another-password')
+    await loginPage.login(User2.username, User2.password)
 
     await mainPage.logout()
 
-    await expect(loginPage.usernameInput).toBeVisible()
-    await expect(loginPage.passwordInput).toBeVisible()
-    await expect(loginPage.signInButton).toBeVisible()
+    await loginPage.expectLoginFormVisible(expect)
   })
 })

@@ -3,13 +3,18 @@ import { LoginPage } from './pages/LoginPage.js'
 import { MainPage } from './pages/MainPage.js'
 import { LabelsPage } from './pages/LabelsPage.js'
 
+const testUser = {
+  username: 'test',
+  password: 'test',
+}
+
 async function loginAndGoToLabels(page) {
   const loginPage = new LoginPage(page)
   const mainPage = new MainPage(page)
   const labelsPage = new LabelsPage(page)
 
   await loginPage.goto()
-  await loginPage.login('test', 'test')
+  await loginPage.login(testUser.username, testUser.password)
   await expect(mainPage.userAvatar).toBeVisible()
 
   await labelsPage.goto()
@@ -17,27 +22,19 @@ async function loginAndGoToLabels(page) {
   return labelsPage
 }
 
-test.describe('Labels CRUD', () => {
-  test('Create label', async ({ page }) => {
+test.describe('Метки CRUD', () => {
+  test('Создание метки', async ({ page }) => {
     const labels = await loginAndGoToLabels(page)
 
     const label = {
       name: `label_${Date.now()}`,
     }
 
-    await labels.openCreateForm()
-    await expect(labels.nameInput).toBeVisible()
-
-    // Вводим данные и сохраняем
-    await labels.fillLabelForm(label)
-    await labels.submitForm()
-
-    await labels.goto()
-
-    await labels.expectLabelInList(label)
+    await labels.createLabel(label)
+    await labels.expectLabelInList(label, expect)
   })
 
-  test('Labels list displays basic info', async ({ page }) => {
+  test('Отображение списка меток', async ({ page }) => {
     const labels = await loginAndGoToLabels(page)
 
     await expect(page.getByText(/^Name$/i)).toBeVisible()
@@ -48,7 +45,7 @@ test.describe('Labels CRUD', () => {
     await expect(bugRow).toContainText('bug')
   })
 
-  test('Edit label', async ({ page }) => {
+  test('Редактирование метки', async ({ page }) => {
     const labels = await loginAndGoToLabels(page)
 
     const original = {
@@ -56,11 +53,8 @@ test.describe('Labels CRUD', () => {
     }
 
     // создаём метку
-    await labels.openCreateForm();
-    await labels.fillLabelForm(original)
-    await labels.submitForm()
-    await labels.goto()
-    await labels.expectLabelInList(original)
+    await labels.createLabel(original)
+    await labels.expectLabelInList(original, expect)
 
     const updated = {
       name: `updated_${Date.now()}`,
@@ -73,21 +67,18 @@ test.describe('Labels CRUD', () => {
     await labels.fillLabelForm(updated)
     await labels.submitForm()
     await labels.goto()
-    await labels.expectLabelInList(updated)
+    await labels.expectLabelInList(updated, expect)
   })
 
-  test('Delete one label', async ({ page }) => {
+  test('Удаление одного лейбла', async ({ page }) => {
     const labels = await loginAndGoToLabels(page)
 
     const target = {
       name: `to_delete_${Date.now()}`,
     }
 
-    await labels.openCreateForm()
-    await labels.fillLabelForm(target)
-    await labels.submitForm()
-    await labels.goto()
-    await labels.expectLabelInList(target)
+    await labels.createLabel(target)
+    await labels.expectLabelInList(target, expect)
 
     // Удаляем через форму редактирования
     await labels.deleteLabelViaEdit(target.name)
@@ -95,7 +86,7 @@ test.describe('Labels CRUD', () => {
     await expect(labels.rowByName(target.name)).toHaveCount(0)
   })
 
-  test('Bulk delete labels', async ({ page }) => {
+  test('Массовое удаление', async ({ page }) => {
     const labels = await loginAndGoToLabels(page)
 
     const l1 = {
@@ -105,19 +96,11 @@ test.describe('Labels CRUD', () => {
       name: `bulk_two_${Date.now()}`,
     }
 
-    // создаём первую метку
-    await labels.openCreateForm()
-    await labels.fillLabelForm(l1)
-    await labels.submitForm()
-    await labels.goto()
-    await labels.expectLabelInList(l1)
+    await labels.createLabel(l1)
+    await labels.expectLabelInList(l1, expect)
 
-    // создаём вторую метку
-    await labels.openCreateForm()
-    await labels.fillLabelForm(l2)
-    await labels.submitForm()
-    await labels.goto()
-    await labels.expectLabelInList(l2)
+    await labels.createLabel(l2)
+    await labels.expectLabelInList(l2, expect)
 
     // Выделяем все и удаляем
     await labels.selectAllLabels()

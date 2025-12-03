@@ -1,57 +1,40 @@
 import { test, expect } from '@playwright/test'
 import { TasksPage } from './pages/TasksPage.js'
 
-async function createTask(page, {
-  assignee = 'michael@example.com',
-  status = 'To Publish',
-  labels = ['task', 'feature'],
-} = {}) {
-  const tasksPage = new TasksPage(page)
-
-  const uniqueSuffix = `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`
-  const title = `Autotest ${uniqueSuffix}`
-
-  await tasksPage.openCreateForm()
-  await expect(page).toHaveURL(/#\/tasks\/create$/)
-
-  // Заполняем форму
-  await tasksPage.selectAssigneeInForm(assignee)
-  await tasksPage.fillTitle(title)
-  await tasksPage.fillContent(`Autotest content ${uniqueSuffix}`)
-  await tasksPage.selectStatusInForm(status)
-  await tasksPage.selectLabels(labels)
-
-  await tasksPage.saveForm()
-
-  await tasksPage.expectOnTaskEditPage()
-
-  await page.getByRole('menuitem', { name: 'Tasks' }).click()
-  await tasksPage.waitForBoardLoaded()
-
-  return { title, status, assignee, labels }
-}
-
 test.describe('Tasks / Kanban board', () => {
+  /** @type {TasksPage} */
+  let tasksPage
+
   test.beforeEach(async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+    tasksPage = new TasksPage(page)
     await tasksPage.goto()
   })
 
-  test('создание задачи: задача появляется в нужной колонке', async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+  test('невозможно создать задачу без заполнения обязательных полей', async () => {
+    await tasksPage.openCreateForm()
+
+    // Заполняем только необязательное поле Content 
+    await tasksPage.fillContent('description')
+
+    await tasksPage.saveForm()
+
+    // Проверяем сообщения валидации
+    await tasksPage.expectRequiredFieldErrors(expect)
+  })
+
+  test('создание задачи: задача появляется в нужной колонке', async () => {
     const status = 'To Publish'
 
-    const { title } = await createTask(page, { status })
+    const { title } = await tasksPage.createTask({ status })
 
     const card = tasksPage.cardInColumn(status, title)
     await expect(card).toBeVisible()
   })
 
-  test('создание задачи: корректные ссылки Edit и Show в карточке', async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+  test('создание задачи: корректные ссылки Edit и Show в карточке', async () => {
     const status = 'To Publish'
 
-    const { title } = await createTask(page, { status })
+    const { title } = await tasksPage.createTask({ status })
 
     const card = tasksPage.cardInColumn(status, title)
     await expect(card).toBeVisible()
@@ -63,12 +46,11 @@ test.describe('Tasks / Kanban board', () => {
     await expect(showLink).toHaveAttribute('href', /#\/tasks\/\d+\/show$/)
   })
 
-  test('фильтр по Assignee отображает только задачи выбранного исполнителя', async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+  test('фильтр по Assignee отображает только задачи выбранного исполнителя', async () => {
     const assignee = 'alice@hotmail.com'
     const status = 'To Publish'
 
-    const { title } = await createTask(page, {
+    const { title } = await tasksPage.createTask({
       assignee,
       status,
       labels: ['critical'],
@@ -76,19 +58,18 @@ test.describe('Tasks / Kanban board', () => {
 
     await tasksPage.chooseAssignee(assignee)
 
-    let card = tasksPage.cardInColumn(status, title);
-    await expect(card).toBeVisible();
+    let card = tasksPage.cardInColumn(status, title)
+    await expect(card).toBeVisible()
 
     await tasksPage.chooseAssignee('michael@example.com')
     card = tasksPage.cardInColumn(status, title)
     await expect(card).toHaveCount(0)
   })
 
-  test('фильтр по Status показывает задачу только в выбранной колонке', async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+  test('фильтр по Status показывает задачу только в выбранной колонке', async () => {
     const status = 'To Publish'
 
-    const { title } = await createTask(page, {
+    const { title } = await tasksPage.createTask({
       status,
       labels: ['task'],
     })
@@ -102,16 +83,14 @@ test.describe('Tasks / Kanban board', () => {
     await expect(card).toHaveCount(0)
   })
 
-  test('фильтр по Label показывает только задачи с нужной меткой', async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+  test('фильтр по Label показывает только задачи с нужной меткой', async () => {
     const status = 'To Publish'
 
-    const { title } = await createTask(page, {
+    const { title } = await tasksPage.createTask({
       status,
       labels: ['bug'],
     })
 
-    // Фильтруем по Label = bug
     await tasksPage.chooseLabel('bug')
 
     let card = tasksPage.cardInColumn(status, title)
@@ -122,21 +101,18 @@ test.describe('Tasks / Kanban board', () => {
     await expect(card).toHaveCount(0)
   })
 
-  test('смена статуса переносит задачу из Draft в To Publish', async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+  test('смена статуса переносит задачу из Draft в To Publish', async () => {
     const initialStatus = 'Draft'
     const newStatus = 'To Publish'
 
-    const { title } = await createTask(page, {
+    const { title } = await tasksPage.createTask({
       status: initialStatus,
       labels: ['task'],
     })
 
-    const titleRegex = new RegExp(title)
-
     // 1. Фильтруем по Draft — задача должна быть видна
     await tasksPage.chooseStatus(initialStatus)
-    let card = page.getByRole('button', { name: titleRegex })
+    let card = tasksPage.cardInColumn(initialStatus, title)
     await expect(card).toBeVisible()
 
     // 2. Открываем редактирование этой задачи из списка Draft
@@ -150,56 +126,48 @@ test.describe('Tasks / Kanban board', () => {
 
     // 4. В фильтре Draft этой задачи больше нет
     await tasksPage.chooseStatus(initialStatus)
-    card = page.getByRole('button', { name: titleRegex })
+    card = tasksPage.cardInColumn(initialStatus, title)
     await expect(card).toHaveCount(0)
 
     // 5. В фильтре To Publish задача есть
     await tasksPage.chooseStatus(newStatus)
-    card = page.getByRole('button', { name: titleRegex })
+    card = tasksPage.cardInColumn(newStatus, title)
     await expect(card).toBeVisible()
   })
-  
-  test('удаление с Undo и повторное удаление окончательно убирает задачу с доски', async ({ page }) => {
-    const tasksPage = new TasksPage(page)
+
+  test('удаление с Undo и повторное удаление окончательно убирает задачу с доски', async () => {
     const status = 'To Publish'
-  
-    const { title } = await createTask(page, {
+
+    const { title } = await tasksPage.createTask({
       status,
       labels: ['task'],
     })
-  
-    const titleRegex = new RegExp(title)
 
     await tasksPage.chooseStatus(status)
-    let card = page.getByRole('button', { name: titleRegex })
+    let card = tasksPage.cardInColumn(status, title)
     await expect(card).toBeVisible()
 
     await tasksPage.openTaskEditFromBoard(status, title)
     await tasksPage.expectOnTaskEditPage()
-  
+
     // 3. Первое удаление + Undo
-    await page.getByRole('button', { name: 'Delete' }).click()
-  
-    const undoButton = page.getByRole('button', { name: 'Undo' })
-    await expect(undoButton).toBeVisible()
-    await undoButton.click()
-  
+    await tasksPage.deleteTask()
+    await tasksPage.undoDelete()
     await tasksPage.waitForBoardLoaded()
- 
+
     await tasksPage.chooseStatus(status)
-    card = page.getByRole('button', { name: titleRegex })
+    card = tasksPage.cardInColumn(status, title)
     await expect(card).toBeVisible()
-  
+
     // 4. Второе удаление без Undo
     await tasksPage.openTaskEditFromBoard(status, title)
     await tasksPage.expectOnTaskEditPage()
-    await page.getByRole('button', { name: 'Delete' }).click()
-  
+    await tasksPage.deleteTask()
+
     await tasksPage.waitForBoardLoaded()
 
     await tasksPage.chooseStatus(status)
-    card = page.getByRole('button', { name: titleRegex })
+    card = tasksPage.cardInColumn(status, title)
     await expect(card).toHaveCount(0)
   })
-
 })

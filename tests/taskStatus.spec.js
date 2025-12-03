@@ -3,46 +3,39 @@ import { LoginPage } from './pages/LoginPage.js'
 import { MainPage } from './pages/MainPage.js'
 import { TaskStatusesPage } from './pages/TaskStatusesPage.js'
 
-async function loginAndGoToTaskStatuses(page) {
-  const loginPage = new LoginPage(page)
-  const mainPage = new MainPage(page)
-  const taskStatusesPage = new TaskStatusesPage(page)
-
-  await loginPage.goto()
-  await loginPage.login('test', 'test')
-  await expect(mainPage.userAvatar).toBeVisible()
-
-  await taskStatusesPage.goto()
-
-  return taskStatusesPage
+const testUser = {
+  username: 'test',
+  password: 'test',
 }
 
-test.describe('Task statuses CRUD', () => {
-  test('Create task status', async ({ page }) => {
-    const statuses = await loginAndGoToTaskStatuses(page)
+test.describe('Статус CRUD', () => {
+  /** @type {TaskStatusesPage} */
+  let statuses;
 
+  test.beforeEach(async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    const mainPage = new MainPage(page)
+    statuses = new TaskStatusesPage(page)
+
+    await loginPage.goto()
+    await loginPage.login(testUser.username, testUser.password)
+    await expect(mainPage.userAvatar).toBeVisible()
+
+    await statuses.goto()
+  })
+
+  test('Создание статуса', async () => {
     const status = {
       name: `New status ${Date.now()}`,
       slug: `new_status_${Date.now()}`,
     }
 
-    // Форма создания отображается корректно
-    await statuses.openCreateForm()
-    await expect(statuses.nameInput).toBeVisible()
-    await expect(statuses.slugInput).toBeVisible()
+    await statuses.createStatus(status)
 
-    // Вводим данные и сохраняем
-    await statuses.fillStatusForm(status)
-    await statuses.submitForm()
-
-    await statuses.goto()
-
-    await statuses.expectStatusInList(status)
+    await statuses.expectStatusInList(status, expect)
   })
 
-  test('Task statuses list displays basic info', async ({ page }) => {
-    const statuses = await loginAndGoToTaskStatuses(page)
-  
+  test('Отображение списка статусов', async ({ page }) => {
     await expect(page.getByText(/^Name$/i)).toBeVisible()
     await expect(page.getByText(/^Slug$/i)).toBeVisible()
 
@@ -51,22 +44,16 @@ test.describe('Task statuses CRUD', () => {
     await expect(draftRow).toContainText('Draft')
     await expect(draftRow).toContainText('draft')
   })
-  
 
-  test('Edit task status', async ({ page }) => {
-    const statuses = await loginAndGoToTaskStatuses(page)
-
+  test('редакирование статуса', async () => {
     const original = {
       name: `Original ${Date.now()}`,
       slug: `original_${Date.now()}`,
     }
 
     // создаём статус
-    await statuses.openCreateForm()
-    await statuses.fillStatusForm(original)
-    await statuses.submitForm()
-    await statuses.goto()
-    await statuses.expectStatusInList(original)
+    await statuses.createStatus(original)
+    await statuses.expectStatusInList(original, expect)
 
     const updated = {
       name: `Updated ${Date.now()}`,
@@ -82,22 +69,17 @@ test.describe('Task statuses CRUD', () => {
     await statuses.submitForm()
     await statuses.goto()
 
-    await statuses.expectStatusInList(updated)
+    await statuses.expectStatusInList(updated, expect)
   })
 
-  test('Delete one task status', async ({ page }) => {
-    const statuses = await loginAndGoToTaskStatuses(page)
-
+  test('Удаление одного статуса', async () => {
     const target = {
       name: `To delete ${Date.now()}`,
       slug: `to_delete_${Date.now()}`,
     }
 
-    await statuses.openCreateForm()
-    await statuses.fillStatusForm(target)
-    await statuses.submitForm()
-    await statuses.goto()
-    await statuses.expectStatusInList(target)
+    await statuses.createStatus(target)
+    await statuses.expectStatusInList(target, expect)
 
     // Удаляем через форму редактирования
     await statuses.deleteStatusViaEdit(target.slug)
@@ -105,31 +87,21 @@ test.describe('Task statuses CRUD', () => {
     await expect(statuses.rowBySlug(target.slug)).toHaveCount(0)
   })
 
-  test('Bulk delete task statuses', async ({ page }) => {
-    const statuses = await loginAndGoToTaskStatuses(page)
-
+  test('Массовое удаление', async () => {
     const s1 = {
       name: `Bulk one ${Date.now()}`,
       slug: `bulk_one_${Date.now()}`,
-    };
+    }
     const s2 = {
       name: `Bulk two ${Date.now()}`,
       slug: `bulk_two_${Date.now()}`,
     }
 
-    // создаём первый статус
-    await statuses.openCreateForm()
-    await statuses.fillStatusForm(s1)
-    await statuses.submitForm()
-    await statuses.goto()
-    await statuses.expectStatusInList(s1)
+    await statuses.createStatus(s1)
+    await statuses.expectStatusInList(s1, expect)
 
-    // создаём второй статус
-    await statuses.openCreateForm()
-    await statuses.fillStatusForm(s2)
-    await statuses.submitForm()
-    await statuses.goto()
-    await statuses.expectStatusInList(s2)
+    await statuses.createStatus(s2)
+    await statuses.expectStatusInList(s2, expect)
 
     // Выделяем все и удаляем
     await statuses.selectAllStatuses()

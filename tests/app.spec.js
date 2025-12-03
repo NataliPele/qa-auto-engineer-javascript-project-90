@@ -1,15 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { LoginPage } from './pages/LoginPage.js'
 
-test('app renders login form on start', async ({ page }) => {
-  await page.goto('/')
+test.describe('Application bootstrap', () => {
+  test('app renders login form on start', async ({ page }) => {
+    const loginPage = new LoginPage(page)
 
-  // Ищем поля формы авторизации
-  const usernameInput = page.getByLabel(/username/i)
-  const passwordInput = page.getByLabel(/password/i)
-  const signInButton = page.getByRole('button', { name: /sign in/i })
+    await loginPage.goto()
 
-  // Проверяем, что элементы видимы
-  await expect(usernameInput).toBeVisible()
-  await expect(passwordInput).toBeVisible()
-  await expect(signInButton).toBeVisible()
+    await loginPage.expectLoginFormVisible(expect)
+  })
 })

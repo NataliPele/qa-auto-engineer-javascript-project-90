@@ -1,5 +1,3 @@
-import { expect } from '@playwright/test'
-
 export class TaskStatusesPage {
   /**
    * @param {import('@playwright/test').Page} page
@@ -24,7 +22,7 @@ export class TaskStatusesPage {
     return this.page.getByRole('row', { name: new RegExp(slug, 'i') })
   }
 
-  async expectStatusInList({ name, slug }) {
+  async expectStatusInList({ name, slug }, expect) {
     const row = this.rowBySlug(slug)
     await expect(row).toBeVisible()
 
@@ -75,7 +73,7 @@ export class TaskStatusesPage {
 
   async openStatusForEdit(slug) {
     const row = this.rowBySlug(slug)
-    await row.click()
+    await row.click();
     await this.nameInput.waitFor()
   }
 
@@ -90,6 +88,14 @@ export class TaskStatusesPage {
 
   async submitForm() {
     await this.saveButton.click()
+  }
+
+  // создать статус и вернуться к списку
+  async createStatus(status) {
+    await this.openCreateForm()
+    await this.fillStatusForm(status)
+    await this.submitForm()
+    await this.goto()
   }
 
   // ===== УДАЛЕНИЕ ОДНОГО СТАТУСА =====

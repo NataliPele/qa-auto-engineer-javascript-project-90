@@ -1,6 +1,3 @@
-// tests/pages/LabelsPage.js
-import { expect } from '@playwright/test'
-
 export class LabelsPage {
   /**
    * @param {import('@playwright/test').Page} page
@@ -25,7 +22,7 @@ export class LabelsPage {
     return this.page.getByRole('row', { name: new RegExp(name, 'i') })
   }
 
-  async expectLabelInList({ name }) {
+  async expectLabelInList({ name }, expect) {
     const row = this.rowByName(name)
     await expect(row).toBeVisible()
     await expect(row).toContainText(name)
@@ -66,18 +63,26 @@ export class LabelsPage {
 
   async openLabelForEdit(name) {
     const row = this.rowByName(name)
-    await row.click()
+    await row.click();
     await this.nameInput.waitFor()
   }
 
   async fillLabelForm({ name }) {
     if (name !== undefined) {
-      await this.nameInput.fill(name);
+      await this.nameInput.fill(name)
     }
   }
 
   async submitForm() {
     await this.saveButton.click()
+  }
+
+  // Упрощённый сценарий создания метки
+  async createLabel(label) {
+    await this.openCreateForm()
+    await this.fillLabelForm(label)
+    await this.submitForm()
+    await this.goto()
   }
 
   // ===== УДАЛЕНИЕ ОДНОЙ МЕТКИ =====
