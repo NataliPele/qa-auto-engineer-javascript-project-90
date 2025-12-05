@@ -35,17 +35,17 @@ https://www.npmjs.com/package/@hexlet/testing-task-manager
 ```
 
 2. Импортируйте и запустите приложение
-    ```javascript
-    import React from 'react'
-    import ReactDOM from 'react-dom/client';
-    import App from '@hexlet/testing-task-manager';
+  ```javascript
+  import React from 'react'
+  import ReactDOM from 'react-dom/client';
+  import App from '@hexlet/testing-task-manager';
 
-    ReactDOM.createRoot(document.getElementById('root')).render(
-      <React.StrictMode>
-        {App()}
-      </React.StrictMode>
-    )
-    ```
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      {App()}
+    </React.StrictMode>
+  )
+  ```
 3. Запустите сервер приложения
 ```bash
 npm run dev
@@ -53,7 +53,8 @@ npm run dev
 По умолчанию приложение доступно по адресу:
   http://localhost:5173
 Убедись, что сервер работает, прежде чем запускать тесты.
+
 4. Запустите тесты 
 ```bash
-  npx playwright test
-  ```
+npx playwright test
+```
