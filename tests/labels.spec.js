@@ -5,7 +5,7 @@ import { LabelsPage } from './pages/LabelsPage.js'
 
 const testUser = {
   username: 'test',
-  password: 'test',
+  password: 'testPass!456',
 }
 
 async function loginAndGoToLabels(page) {
@@ -52,7 +52,6 @@ test.describe('Метки CRUD', () => {
       name: `original_${Date.now()}`,
     }
 
-    // создаём метку
     await labels.createLabel(original)
     await labels.expectLabelInList(original, expect)
 
@@ -60,7 +59,6 @@ test.describe('Метки CRUD', () => {
       name: `updated_${Date.now()}`,
     }
 
-    // форма редактирования отображается и позволяет изменить данные
     await labels.openLabelForEdit(original.name)
     await expect(labels.nameInput).toBeVisible()
 
@@ -80,7 +78,6 @@ test.describe('Метки CRUD', () => {
     await labels.createLabel(target)
     await labels.expectLabelInList(target, expect)
 
-    // Удаляем через форму редактирования
     await labels.deleteLabelViaEdit(target.name)
     await labels.goto()
     await expect(labels.rowByName(target.name)).toHaveCount(0)
@@ -89,23 +86,22 @@ test.describe('Метки CRUD', () => {
   test('Массовое удаление', async ({ page }) => {
     const labels = await loginAndGoToLabels(page)
 
-    const l1 = {
+    const label1 = {
       name: `bulk_one_${Date.now()}`,
     }
-    const l2 = {
+    const label2 = {
       name: `bulk_two_${Date.now()}`,
     }
 
-    await labels.createLabel(l1)
-    await labels.expectLabelInList(l1, expect)
+    await labels.createLabel(label1)
+    await labels.expectLabelInList(label1, expect)
 
-    await labels.createLabel(l2)
-    await labels.expectLabelInList(l2, expect)
+    await labels.createLabel(label2)
+    await labels.expectLabelInList(label2, expect)
 
-    // Выделяем все и удаляем
     await labels.selectAllLabels()
     await labels.deleteSelectedLabels()
-    await expect(labels.rowByName(l1.name)).toHaveCount(0)
-    await expect(labels.rowByName(l2.name)).toHaveCount(0)
+    await expect(labels.rowByName(label1.name)).toHaveCount(0)
+    await expect(labels.rowByName(label2.name)).toHaveCount(0)
   })
 })

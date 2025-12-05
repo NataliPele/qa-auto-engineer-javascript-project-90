@@ -77,7 +77,6 @@ export class LabelsPage {
     await this.saveButton.click()
   }
 
-  // Упрощённый сценарий создания метки
   async createLabel(label) {
     await this.openCreateForm()
     await this.fillLabelForm(label)

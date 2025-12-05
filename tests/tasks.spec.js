@@ -13,12 +13,10 @@ test.describe('Tasks / Kanban board', () => {
   test('невозможно создать задачу без заполнения обязательных полей', async () => {
     await tasksPage.openCreateForm()
 
-    // Заполняем только необязательное поле Content 
     await tasksPage.fillContent('description')
 
     await tasksPage.saveForm()
 
-    // Проверяем сообщения валидации
     await tasksPage.expectRequiredFieldErrors(expect)
   })
 
@@ -110,26 +108,21 @@ test.describe('Tasks / Kanban board', () => {
       labels: ['task'],
     })
 
-    // 1. Фильтруем по Draft — задача должна быть видна
     await tasksPage.chooseStatus(initialStatus)
     let card = tasksPage.cardInColumn(initialStatus, title)
     await expect(card).toBeVisible()
 
-    // 2. Открываем редактирование этой задачи из списка Draft
     await tasksPage.openTaskEditFromBoard(initialStatus, title)
     await tasksPage.expectOnTaskEditPage()
 
-    // 3. Меняем статус на To Publish и сохраняем
     await tasksPage.selectStatusInForm(newStatus)
     await tasksPage.saveForm()
     await tasksPage.waitForBoardLoaded()
 
-    // 4. В фильтре Draft этой задачи больше нет
     await tasksPage.chooseStatus(initialStatus)
     card = tasksPage.cardInColumn(initialStatus, title)
     await expect(card).toHaveCount(0)
 
-    // 5. В фильтре To Publish задача есть
     await tasksPage.chooseStatus(newStatus)
     card = tasksPage.cardInColumn(newStatus, title)
     await expect(card).toBeVisible()
@@ -150,7 +143,6 @@ test.describe('Tasks / Kanban board', () => {
     await tasksPage.openTaskEditFromBoard(status, title)
     await tasksPage.expectOnTaskEditPage()
 
-    // 3. Первое удаление + Undo
     await tasksPage.deleteTask()
     await tasksPage.undoDelete()
     await tasksPage.waitForBoardLoaded()
@@ -159,7 +151,6 @@ test.describe('Tasks / Kanban board', () => {
     card = tasksPage.cardInColumn(status, title)
     await expect(card).toBeVisible()
 
-    // 4. Второе удаление без Undo
     await tasksPage.openTaskEditFromBoard(status, title)
     await tasksPage.expectOnTaskEditPage()
     await tasksPage.deleteTask()

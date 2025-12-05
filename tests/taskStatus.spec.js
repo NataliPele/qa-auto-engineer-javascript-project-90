@@ -5,7 +5,7 @@ import { TaskStatusesPage } from './pages/TaskStatusesPage.js'
 
 const testUser = {
   username: 'test',
-  password: 'test',
+  password: 'PASS679test',
 }
 
 test.describe('Статус CRUD', () => {
@@ -51,7 +51,6 @@ test.describe('Статус CRUD', () => {
       slug: `original_${Date.now()}`,
     }
 
-    // создаём статус
     await statuses.createStatus(original)
     await statuses.expectStatusInList(original, expect)
 
@@ -60,7 +59,6 @@ test.describe('Статус CRUD', () => {
       slug: `updated_${Date.now()}`,
     }
 
-    // форма редактирования отображается и позволяет изменить данные
     await statuses.openStatusForEdit(original.slug)
     await expect(statuses.nameInput).toBeVisible()
     await expect(statuses.slugInput).toBeVisible()
@@ -81,7 +79,6 @@ test.describe('Статус CRUD', () => {
     await statuses.createStatus(target)
     await statuses.expectStatusInList(target, expect)
 
-    // Удаляем через форму редактирования
     await statuses.deleteStatusViaEdit(target.slug)
     await statuses.goto()
     await expect(statuses.rowBySlug(target.slug)).toHaveCount(0)
@@ -103,7 +100,6 @@ test.describe('Статус CRUD', () => {
     await statuses.createStatus(s2)
     await statuses.expectStatusInList(s2, expect)
 
-    // Выделяем все и удаляем
     await statuses.selectAllStatuses()
     await statuses.deleteSelectedStatuses()
     await expect(statuses.rowBySlug(s1.slug)).toHaveCount(0)

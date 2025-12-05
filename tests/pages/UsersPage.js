@@ -1,5 +1,3 @@
-// tests/pages/UsersPage.js
-
 export class UsersPage {
   /**
    * @param {import('@playwright/test').Page} page

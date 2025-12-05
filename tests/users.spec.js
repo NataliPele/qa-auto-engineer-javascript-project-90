@@ -5,7 +5,7 @@ import { UsersPage } from './pages/UsersPage.js'
 
 const testUser = {
   username: 'test',
-  password: 'test',
+  password: 'PassThetest980',
 }
 
 test.describe('Users CRUD', () => {
@@ -36,12 +36,10 @@ test.describe('Users CRUD', () => {
   })
 
   test('Отображение списка пользователей', async ({ page }) => {
-    // Проверяем заголовки колонок
     await expect(page.getByText(/^Email$/i)).toBeVisible()
     await expect(page.getByText(/^First name$/i)).toBeVisible()
     await expect(page.getByText(/^Last name$/i)).toBeVisible()
 
-    // Проверяем, что в списке есть хотя бы один «живой» пользователь
     const existingRow = users.rowByEmail('alice@hotmail.com')
     await expect(existingRow).toBeVisible()
     await expect(existingRow.getByText(/^Alice$/i)).toBeVisible()
@@ -55,7 +53,6 @@ test.describe('Users CRUD', () => {
       lastName: 'Brown',
     }
 
-    // создаём пользователя
     await users.createUser(original)
     await users.expectUserInList(original, expect)
 
@@ -65,7 +62,6 @@ test.describe('Users CRUD', () => {
       lastName: 'Updated',
     }
 
-    // форма редактирования отображается и позволяет изменить данные
     await users.openUserForEdit(original.email)
     await expect(users.emailInput).toBeVisible()
     await expect(users.firstNameInput).toBeVisible()
@@ -84,11 +80,9 @@ test.describe('Users CRUD', () => {
       lastName: 'Test',
     }
 
-    // создаём корректного пользователя
     await users.createUser(user)
     await users.expectUserInList(user, expect)
 
-    // открываем редактирование и вводим некорректный email
     await users.openUserForEdit(user.email)
     await users.emailInput.fill('not-an-email')
     await users.submitForm()
@@ -108,7 +102,6 @@ test.describe('Users CRUD', () => {
     await users.createUser(target)
     await users.expectUserInList(target, expect)
 
-    // Удаляем через форму редактирования
     await users.deleteUserViaEdit(target.email)
     await users.goto()
 
@@ -133,7 +126,6 @@ test.describe('Users CRUD', () => {
     await users.createUser(u2)
     await users.expectUserInList(u2, expect)
 
-    // Выделяем всех и удаляем
     await users.selectAllUsers()
     await users.deleteSelectedUsers()
 

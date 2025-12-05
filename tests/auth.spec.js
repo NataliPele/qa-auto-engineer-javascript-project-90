@@ -4,12 +4,12 @@ import { MainPage } from './pages/MainPage.js'
 
 const User1 = {
   username: 'testuser',
-  password: 'some-password',
+  password: 'firtsPass1234',
 }
 
 const User2 = {
   username: 'another-user',
-  password: 'another-password',
+  password: 'seconsPass5678',
 }
 
 test.describe('Авторизация', () => {

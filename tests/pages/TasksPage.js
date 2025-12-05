@@ -38,16 +38,13 @@ export class TasksPage {
     await this.page.getByRole('textbox', { name: 'Title' }).waitFor()
   }
 
-  // Глобальное сообщение об ошибке формы
   get invalidFormAlert() {
     return this.page.getByText(/the form is not valid\. please check for errors/i);
   }
 
-  // Проверка валидации обязательных полей на форме создания
   async expectRequiredFieldErrors(expect) {
     await this.expectOnTaskCreatePage();
 
-    // Подписи "Required" под обязательными полями
     const requiredMessages = this.page.getByText(/^Required$/);
     await expect(requiredMessages).toHaveCount(3); // Assignee, Title, Status
 
@@ -149,7 +146,6 @@ export class TasksPage {
     return this.page.getByRole('button', { name: new RegExp(title) })
   }
 
-  // Для обратной совместимости с существующими вызовами
   cardInColumn(_statusName, title) {
     return this.cardByTitle(title)
   }
