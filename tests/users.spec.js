@@ -2,10 +2,11 @@ import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/LoginPage.js'
 import { MainPage } from './pages/MainPage.js'
 import { UsersPage } from './pages/UsersPage.js'
+import { generateRandomString } from './utils/generateCredentials.js';
 
 const testUser = {
-  username: 'test',
-  password: 'PassThetest980',
+  username: `user_${generateRandomString(5)}`,
+  password: generateRandomString(5),
 }
 
 test.describe('Users CRUD', () => {

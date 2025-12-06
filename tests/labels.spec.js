@@ -2,10 +2,11 @@ import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/LoginPage.js'
 import { MainPage } from './pages/MainPage.js'
 import { LabelsPage } from './pages/LabelsPage.js'
+import { generateRandomString } from './utils/generateCredentials.js';
 
 const testUser = {
-  username: 'test',
-  password: 'testPass!456',
+  username: `user_${generateRandomString(5)}`,
+  password: generateRandomString(5),
 }
 
 async function loginAndGoToLabels(page) {
