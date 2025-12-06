@@ -119,7 +119,7 @@ export class TasksPage {
     status = 'To Publish',
     labels = ['task', 'feature'],
   } = {}) {
-    const uniqueSuffix = `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`
+    const uniqueSuffix = `${Date.now()}-${Math.random().toString(16).slice(2, 6)}` // NOSONAR
     const title = `Autotest ${uniqueSuffix}`
     const content = `Autotest content ${uniqueSuffix}`
 
